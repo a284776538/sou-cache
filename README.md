@@ -52,24 +52,7 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
 4.  自己定义刷新策略
 实现GlobalRefreshCacheStrategy 的refreshPermission接口
 如：
-@Service
-public class GlobalRefreshCacheStrategyImpl implements GlobalRefreshCacheStrategy {
-    @Autowired
- private RedisLockUtil redisLockUtil;
- @Value("${remote.cache:false}")
-    private boolean remote;
- @Override
- public Boolean refreshPermission(String key) throws Exception {
-        if(remote){
-            boolean lock = redisLockUtil.lock(key,5, TimeUnit.SECONDS);
- return lock;
- }else{
-            //使用默认策略。
-           return null;
- }
-
-    }
-}
+![输入图片说明](image.png)
 
 #### 参与贡献
 
