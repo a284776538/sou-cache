@@ -23,8 +23,10 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
 #### 使用说明
 
 1.  配置application.properties
+
 |   |   |   |
-|---|---|---|
+|参数名称|说明|默认值|
+| spring.application.name  | redis缓存根目录   |   |
 
 2.  xxxx
 3.  xxxx
