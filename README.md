@@ -11,12 +11,15 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
 
 1.    
     引入hutool工具
+
              <dependency>
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-all</artifactId>
                 <version>5.7.3</version>
                 <optional>true</optional>
             </dependency>
+
+
 2.  引入sou-cache的jar到应用中
 
 
