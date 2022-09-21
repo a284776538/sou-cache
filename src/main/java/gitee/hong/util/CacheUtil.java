@@ -237,18 +237,17 @@ public class CacheUtil {
             }
             init();
             key = generateKey(key);
-            Map<Long, Object> valueMap = getData(key);
-            if (valueMap == null) {
-                return null;
-            }
-            long cacheTime = Long.parseLong(valueMap.keySet().iterator().next()+"");
-            if (cacheTime< System.currentTimeMillis()) {
+            if (getOldData( key) !=null) {
                 cache.remove(key);
 
                 if (opsForValue != null) {
                     getRedisMethod("delete").invoke(redisTemplate, key);
                 }
                 log.info("缓存过期删除" + key);
+                return null;
+            }
+            Map<Long, Object> valueMap = getData(key);
+            if (valueMap == null) {
                 return null;
             }
             Object obj = valueMap.get(valueMap.keySet().iterator().next());

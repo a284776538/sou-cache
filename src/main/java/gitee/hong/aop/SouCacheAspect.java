@@ -116,6 +116,7 @@ public class SouCacheAspect implements ApplicationContextAware {
             CacheUtil.openCache = cache;
             CacheUtil.remoteCache = remote;
             CacheUtil.remoteCacheTimeoutAddSeconds = remoteCacheTimeoutAddSeconds;
+            log.info("缓存状态开启状态：{},远程缓存开启状态:{}",cache,remote);
             Object old = CacheUtil.getOldData(key);
             if (old == null) {
                 obj = CacheUtil.getCache(key);
