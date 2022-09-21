@@ -20,7 +20,7 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
             </dependency>
 
 
-2.  引入sou-cache的jar到应用中
+2.  下载sou-cache-1.0-SNAPSHOT.jar引入项目
 
 
 #### 使用说明
