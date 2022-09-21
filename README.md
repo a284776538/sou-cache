@@ -47,7 +47,8 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
 3.  使用注解
 @SouCache
 如下图，使用key保存当前接口，缓存时间10秒
-![输入图片说明](image.png)
+
+![输入图片说明](imgimage.png)
 
 4.  自己定义刷新策略
 实现GlobalRefreshCacheStrategy 的refreshPermission接口
