@@ -17,7 +17,7 @@ public class SouCacheConfiguration implements ApplicationContextInitializer {
     public void initialize(ConfigurableApplicationContext applicationContext) {
         DefaultListableBeanFactory configurableListableBeanFactory = (DefaultListableBeanFactory) applicationContext.getBeanFactory();
         GenericBeanDefinition ejpConfigDefinition  = new GenericBeanDefinition();
-        ejpConfigDefinition.setBeanClassName("EjpConfig");
+        ejpConfigDefinition.setBeanClassName("SouCacheAspect");
         ejpConfigDefinition.setBeanClass(SouCacheAspect.class);
         ejpConfigDefinition.setLazyInit(true);
         configurableListableBeanFactory.registerBeanDefinition("SouCacheAspect",ejpConfigDefinition);

@@ -1,6 +1,8 @@
 package gitee.hong.aop;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.google.common.collect.Maps;
 import gitee.hong.annotation.SouCache;
 import gitee.hong.service.SouRefreshCacheStrategy;
 import gitee.hong.util.CacheUtil;
@@ -17,6 +19,12 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 缓存插件
@@ -35,7 +43,14 @@ public class SouCacheAspect implements ApplicationContextAware {
     private  String cachePrefix;
 
     private SouRefreshCacheStrategy globalRefreshCacheStrategy;
+    //缓存日志
+    private  Map<String, Map<Boolean,Long>> cacheLog = Maps.newConcurrentMap();
+    //缓存命中比例
+    private  Map<String,BigDecimal> cacheRatio= Maps.newConcurrentMap();
 
+    private static final ThreadPoolExecutor pool = new ThreadPoolExecutor(2, 5,
+            5L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<Runnable>(200000));
 
     // 配置织入点
     @Pointcut("@annotation( gitee.hong.annotation.SouCache) ")
@@ -68,6 +83,7 @@ public class SouCacheAspect implements ApplicationContextAware {
         }
 
         key=key.length()>100? key.substring(0,50)+key.intern().hashCode()+"leng:"+key.length():key;
+        key = key.replace("{","").replace("}","");
         return key;
     }
     /**
@@ -163,9 +179,11 @@ public class SouCacheAspect implements ApplicationContextAware {
         Object cacheData=getCache( joinPoint);
         if(cacheData!=null){
             log.info("缓存返回"+getKey(joinPoint));
+            updateLog( joinPoint ,true);
             return cacheData;
         }
         log.info("非缓存返回"+getKey(joinPoint));
+        updateLog( joinPoint ,false);
         return save(joinPoint);
     }
 
@@ -198,6 +216,54 @@ public class SouCacheAspect implements ApplicationContextAware {
         return o;
     }
 
+    /**
+     * 更新缓存命中日志
+     * @param joinPoint
+     * @param target
+     */
+    private  void updateLog( ProceedingJoinPoint joinPoint ,boolean target){
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                SouCache cache = getAnnotation( joinPoint);
+                String key  =cache.key();
+                synchronized (key.intern()){
+                    Map<Boolean,Long> cacheLogDetail =   cacheLog.get(key)==null?new ConcurrentHashMap<>():cacheLog.get(key);
+                    cacheLogDetail.put(target,cacheLogDetail.get(target)==null?1:cacheLogDetail.get(target)+1);
+                    cacheLog.put(key,cacheLogDetail);
+                    BigDecimal ratio =new BigDecimal("0");
+                    try {
+                        long igCache = cacheLogDetail.get(false)==null?0:cacheLogDetail.get(false);
+                        long getCache = cacheLogDetail.get(true)==null?0:cacheLogDetail.get(true);
+                        long all =igCache+getCache;
+                        ratio = new BigDecimal(getCache+"").divide(new BigDecimal(all+""),2, 4);
+
+                    }catch (Exception e){
+
+                    }
+                    cacheRatio.put(key ,ratio);
+                }
+            }
+        });
+
+
+    }
+
+    /**
+     * 5分钟打印异常缓存命中比例
+     */
+    private void disPlayLog() {
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (1 == 1) {
+                    log.info("缓存比例日志:{}", cacheRatio);
+                    ThreadUtil.sleep(60*5*1000);
+                }
+            }
+        });
+    }
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         try {
@@ -210,5 +276,6 @@ public class SouCacheAspect implements ApplicationContextAware {
         }catch (Exception e){
             log.error(e.getMessage(),e);
         }
+        disPlayLog();
     }
 }

@@ -60,7 +60,8 @@ sou-cache是基于Spring开发的缓存插件，能动态刷新缓存，快速�
      * @return true 可以去刷新缓存，false 不可以刷新缓存
      */
 ![输入图片说明](image.png)
-
+#### 流程图
+![输入图片说明](%E6%B5%81%E7%A8%8B%E5%9B%BESouCache.drawio%20(1).png)
 #### 参与贡献
 
 1.  hongzihao
