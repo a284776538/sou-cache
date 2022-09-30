@@ -34,4 +34,11 @@ public @interface SouCache {
      * @return
      */
     int refresh() default 10;
+
+    /**
+     * 远程缓存分散存储节点，避免redis集群的情况下热点缓存压垮redis节点
+     * 建议 = redis集群节点数
+     * @return
+     */
+    int nodes() default  1;
 }

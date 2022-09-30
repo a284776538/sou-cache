@@ -1,4 +1,5 @@
 package gitee.hong.aop;
+import cn.hutool.cache.Cache;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
@@ -47,7 +48,8 @@ public class SouCacheAspect implements ApplicationContextAware {
     private  Map<String, Map<Boolean,Long>> cacheLog = Maps.newConcurrentMap();
     //缓存命中比例
     private  Map<String,BigDecimal> cacheRatio= Maps.newConcurrentMap();
-
+    //缓存节点信息
+    private Cache<Integer, Integer> nodeMap = cn.hutool.cache.CacheUtil.newLRUCache(60);
     private static final ThreadPoolExecutor pool = new ThreadPoolExecutor(2, 5,
             5L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<Runnable>(200000));
@@ -59,6 +61,22 @@ public class SouCacheAspect implements ApplicationContextAware {
     }
 
 
+    private synchronized Integer getNode(ProceedingJoinPoint joinPoint) {
+        try {
+            SouCache cache = getAnnotation(joinPoint);
+            if (remote && cache.nodes() > 1) {
+                synchronized (nodeMap) {
+                    Integer node = nodeMap.get(joinPoint.hashCode()) == null ?
+                            RandomUtil.randomInt(1, cache.nodes() + 1) : nodeMap.get(joinPoint.hashCode());
+                    nodeMap.put(joinPoint.hashCode(), node);
+                    return node;
+                }
+            }
+        } catch (Exception e) {
+            log.info("缓存获得节点异常"+e.getMessage(),e);
+        }
+        return 1;
+    }
     /**
      * 获得注解
      * @param joinPoint
@@ -95,7 +113,7 @@ public class SouCacheAspect implements ApplicationContextAware {
         String key=null;
         try {
             SouCache cache = getAnnotation( joinPoint);
-            key  =cache.key();
+            key  =cache.key()+":"+getNode( joinPoint)+":";
             Object[] args =  joinPoint.getArgs();
             StringBuilder subKey=new StringBuilder();
             if(args.length>0){
@@ -258,6 +276,7 @@ public class SouCacheAspect implements ApplicationContextAware {
             public void run() {
                 while (1 == 1) {
                     log.info("缓存比例日志:{}", cacheRatio);
+                    log.info("缓存的node保存数：" + nodeMap.size());
                     ThreadUtil.sleep(60*5*1000);
                 }
             }
